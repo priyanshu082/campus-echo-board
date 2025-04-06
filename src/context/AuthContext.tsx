@@ -1,9 +1,13 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import axios from "axios";
+
+// Define API URL
+const API_URL = "http://localhost:5000/api";
 
 // Define user roles
-export type UserRole = "student" | "teacher" | "admin";
+export type UserRole = "STUDENT" | "TEACHER" | "ADMIN";
 
 // Define user interface
 export interface User {
@@ -11,35 +15,8 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  token?: string;
 }
-
-// Mock users for demonstration
-const mockUsers: User[] = [
-  {
-    id: "1",
-    name: "Admin User",
-    email: "admin@school.edu",
-    role: "admin",
-  },
-  {
-    id: "2",
-    name: "Teacher Smith",
-    email: "smith@school.edu",
-    role: "teacher",
-  },
-  {
-    id: "3",
-    name: "Teacher Johnson",
-    email: "johnson@school.edu",
-    role: "teacher",
-  },
-  {
-    id: "4",
-    name: "Student Doe",
-    email: "student@school.edu",
-    role: "student",
-  },
-];
 
 interface AuthContextType {
   user: User | null;
@@ -47,16 +24,39 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  addUser: (user: Omit<User, "id">) => void;
+  addUser: (user: { name: string, email: string, password: string, role: UserRole }) => Promise<boolean>;
+  fetchUsers: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Create axios instance with auth header
+export const authAPI = axios.create({
+  baseURL: API_URL,
+});
+
+// Add token to requests if available
+authAPI.interceptors.request.use(
+  (config) => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      if (user.token) {
+        config.headers["Authorization"] = `Bearer ${user.token}`;
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
   const { toast } = useToast();
 
   // Check for existing session on load
@@ -72,24 +72,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // In a real app, this would make an API call to validate credentials
-    // For this demo, we'll just check against our mock users
-    const foundUser = users.find((u) => u.email === email);
+  // Fetch users if authenticated as admin
+  useEffect(() => {
+    if (user?.role === "ADMIN") {
+      fetchUsers();
+    }
+  }, [user]);
+
+  const fetchUsers = async (): Promise<void> => {
+    if (!user || user.role !== "ADMIN") return;
     
-    // Simple validation - in a real app this would verify the password
-    if (foundUser && password.length > 0) {
-      setUser(foundUser);
-      localStorage.setItem("user", JSON.stringify(foundUser));
+    try {
+      const response = await authAPI.get('/users');
+      setUsers(response.data);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch user list",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/login`, {
+        email,
+        password
+      });
+      
+      const userData = response.data;
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
+      
       toast({
         title: "Login successful",
-        description: `Welcome back, ${foundUser.name}!`,
+        description: `Welcome back, ${userData.name}!`,
       });
       return true;
-    } else {
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Invalid email or password";
       toast({
         title: "Login failed",
-        description: "Invalid email or password",
+        description: message,
         variant: "destructive",
       });
       return false;
@@ -105,17 +131,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   };
 
-  const addUser = (newUser: Omit<User, "id">) => {
-    const userWithId = {
-      ...newUser,
-      id: `${users.length + 1}`, // Simple ID generation
-    };
-    
-    setUsers([...users, userWithId]);
-    toast({
-      title: "User added",
-      description: `${newUser.name} has been added as a ${newUser.role}.`,
-    });
+  const addUser = async (newUser: { name: string, email: string, password: string, role: UserRole }): Promise<boolean> => {
+    try {
+      await authAPI.post('/users', newUser);
+      
+      toast({
+        title: "User added",
+        description: `${newUser.name} has been added as a ${newUser.role.toLowerCase()}.`,
+      });
+      
+      // Refresh the user list
+      fetchUsers();
+      return true;
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Failed to add user";
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+      return false;
+    }
   };
 
   return (
@@ -127,6 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         login,
         logout,
         addUser,
+        fetchUsers
       }}
     >
       {children}

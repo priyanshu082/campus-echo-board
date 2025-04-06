@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,6 @@ const NoticeForm: React.FC = () => {
         title,
         content,
         authorId: user.id,
-        authorName: user.name,
         important,
       });
       

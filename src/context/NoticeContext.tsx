@@ -1,7 +1,8 @@
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { User } from "./AuthContext";
+import { authAPI } from "./AuthContext";
 
 // Define notice interface
 export interface Notice {
@@ -14,42 +15,13 @@ export interface Notice {
   important: boolean;
 }
 
-// Mock notices for demonstration
-const mockNotices: Notice[] = [
-  {
-    id: "1",
-    title: "End of Term Examination Schedule",
-    content: "The end of term examinations will begin on July 1st, 2025. All students should review the exam timetable posted on the school website.",
-    createdAt: new Date(2025, 3, 1), // April 1, 2025
-    authorId: "2",
-    authorName: "Teacher Smith",
-    important: true,
-  },
-  {
-    id: "2",
-    title: "School Science Fair",
-    content: "The annual science fair will be held on April 15th, 2025. Students interested in participating should register by April 10th with their science teachers.",
-    createdAt: new Date(2025, 3, 4), // April 4, 2025
-    authorId: "3",
-    authorName: "Teacher Johnson",
-    important: false,
-  },
-  {
-    id: "3",
-    title: "Parent-Teacher Conference",
-    content: "Parent-Teacher conferences are scheduled for April 20th-21st, 2025. Please check the online portal to book your appointment slots.",
-    createdAt: new Date(2025, 3, 5), // April 5, 2025
-    authorId: "2",
-    authorName: "Teacher Smith",
-    important: true,
-  },
-];
-
 interface NoticeContextType {
   notices: Notice[];
-  addNotice: (notice: Omit<Notice, "id" | "createdAt" | "authorName">) => void;
-  deleteNotice: (id: string, user: User) => boolean;
-  filterNoticesByDate: (startDate?: Date, endDate?: Date) => Notice[];
+  addNotice: (notice: Omit<Notice, "id" | "createdAt" | "authorName">) => Promise<boolean>;
+  deleteNotice: (id: string, user: User) => Promise<boolean>;
+  filterNoticesByDate: (startDate?: Date, endDate?: Date) => Promise<Notice[]>;
+  fetchNotices: () => Promise<void>;
+  isLoading: boolean;
 }
 
 const NoticeContext = createContext<NoticeContextType | undefined>(undefined);
@@ -57,70 +29,119 @@ const NoticeContext = createContext<NoticeContextType | undefined>(undefined);
 export const NoticeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [notices, setNotices] = useState<Notice[]>(mockNotices);
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { toast } = useToast();
 
-  const addNotice = (
-    notice: Omit<Notice, "id" | "createdAt" | "authorName">
-  ) => {
-    const newNotice: Notice = {
-      ...notice,
-      id: Date.now().toString(), // Simple ID generation
-      createdAt: new Date(),
-      authorName: "", // This will be filled by the component based on current user
-    };
+  // Fetch notices on component mount
+  useEffect(() => {
+    fetchNotices();
+  }, []);
 
-    setNotices([newNotice, ...notices]);
-    toast({
-      title: "Notice posted",
-      description: "Your notice has been successfully posted.",
-    });
-  };
-
-  const deleteNotice = (id: string, user: User): boolean => {
-    const notice = notices.find((n) => n.id === id);
-    
-    if (!notice) {
+  const fetchNotices = async (): Promise<void> => {
+    try {
+      setIsLoading(true);
+      const response = await authAPI.get("/notices");
+      
+      // Convert string dates to Date objects
+      const fetchedNotices = response.data.map((notice: any) => ({
+        ...notice,
+        createdAt: new Date(notice.createdAt)
+      }));
+      
+      setNotices(fetchedNotices);
+    } catch (error) {
+      console.error("Failed to fetch notices:", error);
       toast({
         title: "Error",
-        description: "Notice not found",
+        description: "Failed to load notices. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const addNotice = async (
+    notice: Omit<Notice, "id" | "createdAt" | "authorName">
+  ): Promise<boolean> => {
+    try {
+      const response = await authAPI.post("/notices", notice);
+      
+      // Convert createdAt string to Date object
+      const newNotice = {
+        ...response.data,
+        createdAt: new Date(response.data.createdAt)
+      };
+      
+      setNotices([newNotice, ...notices]);
+      toast({
+        title: "Notice posted",
+        description: "Your notice has been successfully posted.",
+      });
+      return true;
+    } catch (error: any) {
+      console.error("Failed to add notice:", error);
+      const message = error.response?.data?.message || "Failed to post notice";
+      toast({
+        title: "Error",
+        description: message,
         variant: "destructive",
       });
       return false;
     }
+  };
 
-    // Check if user is authorized to delete the notice
-    if (user.role === "admin" || (user.role === "teacher" && notice.authorId === user.id)) {
+  const deleteNotice = async (id: string, user: User): Promise<boolean> => {
+    try {
+      await authAPI.delete(`/notices/${id}`);
+      
       setNotices(notices.filter((notice) => notice.id !== id));
       toast({
         title: "Notice deleted",
         description: "The notice has been removed from the board.",
       });
       return true;
-    } else {
+    } catch (error: any) {
+      console.error("Failed to delete notice:", error);
+      const message = error.response?.data?.message || "Failed to delete notice";
       toast({
-        title: "Permission denied",
-        description: "You don't have permission to delete this notice.",
+        title: "Error",
+        description: message,
         variant: "destructive",
       });
       return false;
     }
   };
 
-  const filterNoticesByDate = (startDate?: Date, endDate?: Date): Notice[] => {
-    return notices.filter((notice) => {
-      if (startDate && notice.createdAt < startDate) {
-        return false;
+  const filterNoticesByDate = async (startDate?: Date, endDate?: Date): Promise<Notice[]> => {
+    try {
+      let url = "/notices";
+      const params = new URLSearchParams();
+      
+      if (startDate) {
+        params.append("startDate", startDate.toISOString());
       }
+      
       if (endDate) {
-        const endOfDay = new Date(endDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        if (notice.createdAt > endOfDay) {
-          return false;
-        }
+        params.append("endDate", endDate.toISOString());
       }
-      return true;
-    });
+      
+      if (params.toString()) {
+        url += `?${params.toString()}`;
+      }
+      
+      const response = await authAPI.get(url);
+      
+      // Convert string dates to Date objects
+      return response.data.map((notice: any) => ({
+        ...notice,
+        createdAt: new Date(notice.createdAt)
+      }));
+    } catch (error) {
+      console.error("Failed to filter notices:", error);
+      throw error;
+    }
   };
 
   return (
@@ -130,6 +151,8 @@ export const NoticeProvider: React.FC<{ children: React.ReactNode }> = ({
         addNotice,
         deleteNotice,
         filterNoticesByDate,
+        fetchNotices,
+        isLoading
       }}
     >
       {children}
