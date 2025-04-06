@@ -71,6 +71,19 @@ const LoginPage: React.FC = () => {
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
             
+            <div className="text-center mt-4">
+              <span className="text-sm text-gray-500">
+                Don't have an account?{" "}
+                <Button 
+                  variant="link" 
+                  className="p-0" 
+                  onClick={() => navigate("/register")}
+                >
+                  Register now
+                </Button>
+              </span>
+            </div>
+            
             <div className="p-4 mt-4 text-sm text-center text-gray-600 bg-gray-50 rounded-md">
               <p>For demo purposes, you can use these credentials:</p>
               <ul className="mt-2 space-y-1">

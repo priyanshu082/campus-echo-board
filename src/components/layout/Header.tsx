@@ -19,8 +19,8 @@ const Header: React.FC = () => {
   };
 
   const getRoleBadgeClass = () => {
-    if (user?.role === "admin") return "bg-admin text-white";
-    if (user?.role === "teacher") return "bg-teacher text-white";
+    if (user?.role === "ADMIN") return "bg-admin text-white";
+    if (user?.role === "TEACHER") return "bg-teacher text-white";
     return "bg-student text-white";
   };
 
@@ -43,12 +43,12 @@ const Header: React.FC = () => {
               <div className="hidden mr-4 sm:block">
                 <div className="text-sm font-medium">{user?.name}</div>
                 <div className={`text-xs px-2 py-0.5 rounded-full inline-block ${getRoleBadgeClass()}`}>
-                  {user?.role.charAt(0).toUpperCase() + user?.role.slice(1)}
+                  {user?.role.charAt(0) + user?.role.slice(1).toLowerCase()}
                 </div>
               </div>
               
               {/* Only admin sees the admin link */}
-              {user?.role === "admin" && (
+              {user?.role === "ADMIN" && (
                 <Button 
                   variant="outline" 
                   className="mr-2 hidden sm:inline-flex"
@@ -59,7 +59,7 @@ const Header: React.FC = () => {
               )}
               
               {/* Only teachers can create notices */}
-              {(user?.role === "teacher" || user?.role === "admin") && (
+              {(user?.role === "TEACHER" || user?.role === "ADMIN") && (
                 <Button 
                   variant="outline" 
                   className="mr-2"
@@ -72,7 +72,10 @@ const Header: React.FC = () => {
               <Button onClick={handleLogout}>Logout</Button>
             </div>
           ) : (
-            <Button onClick={handleLogin}>Login</Button>
+            <div className="flex gap-2">
+              <Button onClick={handleLogin} variant="outline">Login</Button>
+              <Button onClick={() => navigate("/register")}>Register</Button>
+            </div>
           )}
         </div>
       </div>
