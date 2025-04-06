@@ -24,10 +24,10 @@ const NoticeCard: React.FC<NoticeCardProps> = ({ notice }) => {
     if (!user) return false;
     
     // Admin can delete any notice
-    if (user.role === "admin") return true;
+    if (user.role === "ADMIN") return true;
     
     // Teachers can only delete their own notices
-    if (user.role === "teacher") {
+    if (user.role === "TEACHER") {
       return user.id === notice.authorId;
     }
     

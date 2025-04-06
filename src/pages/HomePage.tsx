@@ -63,7 +63,7 @@ const HomePage: React.FC = () => {
           </p>
         </div>
         
-        {(user?.role === "teacher" || user?.role === "admin") && (
+        {(user?.role === "TEACHER" || user?.role === "ADMIN") && (
           <Button 
             onClick={() => navigate("/create")}
             className="bg-notice hover:bg-notice-hover w-full sm:w-auto"

@@ -3,7 +3,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { MoonIcon, SunIcon, BellIcon } from "lucide-react";
+import { BellIcon } from "lucide-react";
 
 const Header: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -43,7 +43,8 @@ const Header: React.FC = () => {
               <div className="hidden mr-4 sm:block">
                 <div className="text-sm font-medium">{user?.name}</div>
                 <div className={`text-xs px-2 py-0.5 rounded-full inline-block ${getRoleBadgeClass()}`}>
-                  {user?.role.charAt(0) + user?.role.slice(1).toLowerCase()}
+                  {user?.role === "ADMIN" ? "Admin" : 
+                   user?.role === "TEACHER" ? "Teacher" : "Student"}
                 </div>
               </div>
               

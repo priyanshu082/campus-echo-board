@@ -15,13 +15,13 @@ const CreateNoticePage: React.FC = () => {
       return;
     }
     
-    if (user?.role !== "teacher" && user?.role !== "admin") {
+    if (user?.role !== "TEACHER" && user?.role !== "ADMIN") {
       navigate("/");
     }
   }, [isAuthenticated, user, navigate]);
 
   // Return null while checking authentication to avoid flashing content
-  if (!isAuthenticated || (user?.role !== "teacher" && user?.role !== "admin")) {
+  if (!isAuthenticated || (user?.role !== "TEACHER" && user?.role !== "ADMIN")) {
     return null;
   }
 

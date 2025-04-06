@@ -6,7 +6,7 @@ import axios from "axios";
 // Define API URL
 const API_URL = "http://localhost:9999/api";
 
-// Define user roles
+// Define user roles to match Prisma schema
 export type UserRole = "STUDENT" | "TEACHER" | "ADMIN";
 
 // Define user interface
@@ -25,7 +25,9 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   addUser: (user: { name: string, email: string, password: string, role: UserRole }) => Promise<boolean>;
+  updateUserRole: (userId: string, role: UserRole) => Promise<boolean>;
   fetchUsers: () => Promise<void>;
+  deleteUser: (userId: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -154,6 +156,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const updateUserRole = async (userId: string, role: UserRole): Promise<boolean> => {
+    try {
+      await authAPI.put(`/users/${userId}/role`, { role });
+      
+      toast({
+        title: "Role updated",
+        description: `User role has been updated to ${role.toLowerCase()}.`,
+      });
+      
+      // Refresh the user list
+      fetchUsers();
+      return true;
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Failed to update user role";
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
+  const deleteUser = async (userId: string): Promise<boolean> => {
+    try {
+      await authAPI.delete(`/users/${userId}`);
+      
+      toast({
+        title: "User deleted",
+        description: "User has been successfully deleted.",
+      });
+      
+      // Refresh the user list
+      fetchUsers();
+      return true;
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Failed to delete user";
+      toast({
+        title: "Error",
+        description: message,
+        variant: "destructive",
+      });
+      return false;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -163,7 +211,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         login,
         logout,
         addUser,
-        fetchUsers
+        updateUserRole,
+        fetchUsers,
+        deleteUser
       }}
     >
       {children}

@@ -2,9 +2,13 @@
 import React, { useState } from "react";
 import { Notice } from "@/context/NoticeContext";
 import NoticeCard from "./NoticeCard";
-import { DateRange } from "react-day-picker";
-import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface NoticeListProps {
   notices: Notice[];
@@ -12,7 +16,7 @@ interface NoticeListProps {
 
 const NoticeList: React.FC<NoticeListProps> = ({ notices }) => {
   const [filter, setFilter] = useState<"all" | "important">("all");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [date, setDate] = useState<Date | undefined>(undefined);
 
   const filteredNotices = notices
     .filter((notice) => {
@@ -20,25 +24,20 @@ const NoticeList: React.FC<NoticeListProps> = ({ notices }) => {
       return true;
     })
     .filter((notice) => {
-      if (!dateRange?.from) return true;
+      if (!date) return true;
       
       const noticeDate = new Date(notice.createdAt);
-      
-      // If we have a start date but no end date
-      if (dateRange.from && !dateRange.to) {
-        return noticeDate >= dateRange.from;
-      }
-      
-      // If we have both start and end date
-      if (dateRange.from && dateRange.to) {
-        const endOfDay = new Date(dateRange.to);
-        endOfDay.setHours(23, 59, 59, 999);
-        return noticeDate >= dateRange.from && noticeDate <= endOfDay;
-      }
-      
-      return true;
+      return (
+        noticeDate.getDate() === date.getDate() &&
+        noticeDate.getMonth() === date.getMonth() &&
+        noticeDate.getFullYear() === date.getFullYear()
+      );
     })
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+  const clearDate = () => {
+    setDate(undefined);
+  };
 
   return (
     <div>
@@ -58,14 +57,38 @@ const NoticeList: React.FC<NoticeListProps> = ({ notices }) => {
           </div>
           
           <div className="w-full sm:w-auto">
-            <Label htmlFor="date-range" className="block mb-1">Date range</Label>
-            <DateRangePicker
-              value={dateRange}
-              onChange={setDateRange}
-              className="w-full"
-              placeholder="Select date range"
-              align="start"
-            />
+            <Label htmlFor="date-filter" className="block mb-1">Filter by date</Label>
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="date-filter"
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={setDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              
+              {date && (
+                <Button variant="ghost" onClick={clearDate} size="icon">
+                  ✕
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>

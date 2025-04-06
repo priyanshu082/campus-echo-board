@@ -3,13 +3,17 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../db';
+import { UserRole } from '@prisma/client';
 
 export const authRoutes = express.Router();
 
 // Register new user
 authRoutes.post('/register', async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
+    
+    // Default role is STUDENT - only admins can create teachers or admin users
+    const role = UserRole.STUDENT;
     
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -63,8 +67,6 @@ authRoutes.post('/login', async (req, res) => {
     const user = await prisma.user.findUnique({
       where: { email }
     });
-    
-    console.log(user)
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });

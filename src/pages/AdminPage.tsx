@@ -7,17 +7,37 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const AdminPage: React.FC = () => {
-  const { isAuthenticated, user, users, addUser } = useAuth();
+  const { isAuthenticated, user, users, addUser, updateUserRole, deleteUser } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
-    role: "student" as UserRole,
+    password: "defaultpassword", // Default password for new users
+    role: "STUDENT" as UserRole,
   });
+
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [adminCount, setAdminCount] = useState(0);
 
   // Redirect if not authenticated or if user is not an admin
   React.useEffect(() => {
@@ -26,10 +46,15 @@ const AdminPage: React.FC = () => {
       return;
     }
     
-    if (user?.role !== "admin") {
+    if (user?.role !== "ADMIN") {
       navigate("/");
     }
-  }, [isAuthenticated, user, navigate]);
+    
+    // Count admins
+    if (users && users.length > 0) {
+      setAdminCount(users.filter(u => u.role === "ADMIN").length);
+    }
+  }, [isAuthenticated, user, navigate, users]);
 
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,18 +89,50 @@ const AdminPage: React.FC = () => {
       return;
     }
     
+    // Check if trying to add more than 2 admins
+    if (newUser.role === "ADMIN" && adminCount >= 2) {
+      toast({
+        title: "Error",
+        description: "Maximum of 2 admin users already exist.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     addUser(newUser);
     
     // Reset form
     setNewUser({
       name: "",
       email: "",
-      role: "student",
+      password: "defaultpassword",
+      role: "STUDENT",
     });
   };
 
+  const handleRoleChange = (userId: string, newRole: UserRole) => {
+    // Don't allow changing role if it would exceed 2 admins
+    if (newRole === "ADMIN" && adminCount >= 2) {
+      toast({
+        title: "Error",
+        description: "Maximum of 2 admin users already exist.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    updateUserRole(userId, newRole);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (userToDelete) {
+      deleteUser(userToDelete);
+      setUserToDelete(null);
+    }
+  };
+
   // Return null while checking authentication to avoid flashing content
-  if (!isAuthenticated || user?.role !== "admin") {
+  if (!isAuthenticated || user?.role !== "ADMIN") {
     return null;
   }
 
@@ -102,6 +159,7 @@ const AdminPage: React.FC = () => {
                       <th className="p-2 border">Name</th>
                       <th className="p-2 border">Email</th>
                       <th className="p-2 border">Role</th>
+                      <th className="p-2 border">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -112,11 +170,54 @@ const AdminPage: React.FC = () => {
                         <td className="p-2 border">
                           <span 
                             className={`px-2 py-0.5 rounded-full text-white text-xs
-                              ${u.role === 'admin' ? 'bg-admin' : 
-                                u.role === 'teacher' ? 'bg-teacher' : 'bg-student'}`}
+                              ${u.role === 'ADMIN' ? 'bg-admin' : 
+                                u.role === 'TEACHER' ? 'bg-teacher' : 'bg-student'}`}
                           >
-                            {u.role.charAt(0).toUpperCase() + u.role.slice(1)}
+                            {u.role.charAt(0) + u.role.slice(1).toLowerCase()}
                           </span>
+                        </td>
+                        <td className="p-2 border">
+                          <div className="flex space-x-2">
+                            {/* Don't show role dropdown for the current admin */}
+                            {u.id !== user.id && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm">Change Role</Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleRoleChange(u.id, "STUDENT")}
+                                    disabled={u.role === "STUDENT"}
+                                  >
+                                    Student
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleRoleChange(u.id, "TEACHER")}
+                                    disabled={u.role === "TEACHER"}
+                                  >
+                                    Teacher
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleRoleChange(u.id, "ADMIN")}
+                                    disabled={u.role === "ADMIN" || adminCount >= 2}
+                                  >
+                                    Admin {adminCount >= 2 && "(Max 2)"}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                            
+                            {/* Don't show delete button for the current admin */}
+                            {u.id !== user.id && (
+                              <Button 
+                                variant="destructive" 
+                                size="sm"
+                                onClick={() => setUserToDelete(u.id)}
+                              >
+                                Delete
+                              </Button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -160,6 +261,19 @@ const AdminPage: React.FC = () => {
                 </div>
                 
                 <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <input
+                    id="password"
+                    type="password"
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                    className="w-full p-2 border rounded-md"
+                    placeholder="Enter password"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
                   <select
                     id="role"
@@ -170,9 +284,9 @@ const AdminPage: React.FC = () => {
                     className="w-full p-2 border rounded-md"
                     required
                   >
-                    <option value="student">Student</option>
-                    <option value="teacher">Teacher</option>
-                    <option value="admin">Admin</option>
+                    <option value="STUDENT">Student</option>
+                    <option value="TEACHER">Teacher</option>
+                    <option value="ADMIN" disabled={adminCount >= 2}>Admin {adminCount >= 2 && "(Max 2)"}</option>
                   </select>
                 </div>
                 
@@ -187,6 +301,25 @@ const AdminPage: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      {/* Confirmation Dialog */}
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user
+              and all their data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>
+              Delete User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
