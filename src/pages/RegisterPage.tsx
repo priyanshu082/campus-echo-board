@@ -48,7 +48,7 @@ const RegisterPage: React.FC = () => {
     
     try {
       // Register user with the API
-      await axios.post("http://localhost:5000/api/auth/register", {
+      await axios.post("http://localhost:9999/api/auth/register", {
         name,
         email,
         password,
@@ -149,22 +149,7 @@ const RegisterPage: React.FC = () => {
               </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Select 
-                value={role}
-                onValueChange={(value) => setRole(value as UserRole)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="STUDENT">Student</SelectItem>
-                  <SelectItem value="TEACHER">Teacher</SelectItem>
-                  <SelectItem value="ADMIN">Administrator</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+         
             
             <Button
               type="submit"

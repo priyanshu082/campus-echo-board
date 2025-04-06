@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useAuth, UserRole } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -163,64 +162,72 @@ const AdminPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map((u) => (
-                      <tr key={u.id} className="border-b">
-                        <td className="p-2 border">{u.name}</td>
-                        <td className="p-2 border">{u.email}</td>
-                        <td className="p-2 border">
-                          <span 
-                            className={`px-2 py-0.5 rounded-full text-white text-xs
-                              ${u.role === 'ADMIN' ? 'bg-admin' : 
-                                u.role === 'TEACHER' ? 'bg-teacher' : 'bg-student'}`}
-                          >
-                            {u.role.charAt(0) + u.role.slice(1).toLowerCase()}
-                          </span>
-                        </td>
-                        <td className="p-2 border">
-                          <div className="flex space-x-2">
-                            {/* Don't show role dropdown for the current admin */}
-                            {u.id !== user.id && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" size="sm">Change Role</Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                  <DropdownMenuItem 
-                                    onClick={() => handleRoleChange(u.id, "STUDENT")}
-                                    disabled={u.role === "STUDENT"}
-                                  >
-                                    Student
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem 
-                                    onClick={() => handleRoleChange(u.id, "TEACHER")}
-                                    disabled={u.role === "TEACHER"}
-                                  >
-                                    Teacher
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem 
-                                    onClick={() => handleRoleChange(u.id, "ADMIN")}
-                                    disabled={u.role === "ADMIN" || adminCount >= 2}
-                                  >
-                                    Admin {adminCount >= 2 && "(Max 2)"}
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
-                            
-                            {/* Don't show delete button for the current admin */}
-                            {u.id !== user.id && (
-                              <Button 
-                                variant="destructive" 
-                                size="sm"
-                                onClick={() => setUserToDelete(u.id)}
-                              >
-                                Delete
-                              </Button>
-                            )}
-                          </div>
+                    {users && users.length > 0 ? (
+                      users.map((u) => (
+                        <tr key={u.id} className="border-b">
+                          <td className="p-2 border">{u.name}</td>
+                          <td className="p-2 border">{u.email}</td>
+                          <td className="p-2 border">
+                            <span 
+                              className={`px-2 py-0.5 rounded-full text-white text-xs
+                                ${u.role === 'ADMIN' ? 'bg-admin' : 
+                                  u.role === 'TEACHER' ? 'bg-teacher' : 'bg-student'}`}
+                            >
+                              {u.role.charAt(0) + u.role.slice(1).toLowerCase()}
+                            </span>
+                          </td>
+                          <td className="p-2 border">
+                            <div className="flex space-x-2">
+                              {/* Don't show role dropdown for the current admin */}
+                              {u.id !== user.id && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm">Change Role</Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleRoleChange(u.id, "STUDENT")}
+                                      disabled={u.role === "STUDENT"}
+                                    >
+                                      Student
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleRoleChange(u.id, "TEACHER")}
+                                      disabled={u.role === "TEACHER"}
+                                    >
+                                      Teacher
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem 
+                                      onClick={() => handleRoleChange(u.id, "ADMIN")}
+                                      disabled={u.role === "ADMIN" || adminCount >= 2}
+                                    >
+                                      Admin {adminCount >= 2 && "(Max 2)"}
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                              
+                              {/* Don't show delete button for the current admin */}
+                              {u.id !== user.id && (
+                                <Button 
+                                  variant="destructive" 
+                                  size="sm"
+                                  onClick={() => setUserToDelete(u.id)}
+                                >
+                                  Delete
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="p-2 text-center">
+                          No users found
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
