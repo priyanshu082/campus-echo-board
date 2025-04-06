@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -33,7 +32,7 @@ const Header: React.FC = () => {
             className="text-xl font-bold cursor-pointer sm:text-2xl"
             onClick={() => navigate("/")}
           >
-            Campus <span className="text-notice">Echo</span> Board
+            Notice
           </h1>
         </div>
 
@@ -48,11 +47,11 @@ const Header: React.FC = () => {
                 </div>
               </div>
               
-              {/* Only admin sees the admin link */}
+              {/* Admin link visible on both mobile and desktop */}
               {user?.role === "ADMIN" && (
                 <Button 
                   variant="outline" 
-                  className="mr-2 hidden sm:inline-flex"
+                  className="mr-2"
                   onClick={() => navigate("/admin")}
                 >
                   Admin
