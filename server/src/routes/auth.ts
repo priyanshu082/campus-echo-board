@@ -58,11 +58,13 @@ authRoutes.post('/register', async (req, res) => {
 authRoutes.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    
     // Find user
     const user = await prisma.user.findUnique({
       where: { email }
     });
+    
+    console.log(user)
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
