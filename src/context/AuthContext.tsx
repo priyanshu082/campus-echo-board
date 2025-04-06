@@ -4,7 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 import axios from "axios";
 
 // Define API URL
-const API_URL = "http://localhost:9999/api";
+const API_URL = "https://notice-server-szds.onrender.com/api";
 
 // Define user roles to match Prisma schema
 export type UserRole = "STUDENT" | "TEACHER" | "ADMIN";

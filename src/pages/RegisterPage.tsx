@@ -48,11 +48,11 @@ const RegisterPage: React.FC = () => {
     
     try {
       // Register user with the API
-      await axios.post("http://localhost:9999/api/auth/register", {
+      await axios.post("https://notice-server-szds.onrender.com/api/auth/register", {
         name,
         email,
         password,
-        role
+        // role
       });
       
       toast({
