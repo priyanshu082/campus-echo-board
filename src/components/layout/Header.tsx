@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { BellIcon } from "lucide-react";
+import { BookAIcon } from "lucide-react";
 
 const Header: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -27,7 +27,7 @@ const Header: React.FC = () => {
     <header className="sticky top-0 z-30 w-full bg-white border-b shadow-sm">
       <div className="container flex items-center justify-between h-16 px-4 mx-auto sm:px-6">
         <div className="flex items-center">
-          <BellIcon className="w-8 h-8 text-notice mr-2" />
+          <BookAIcon className="w-8 h-8 text-notice mr-2" />
           <h1 
             className="text-xl font-bold cursor-pointer sm:text-2xl"
             onClick={() => navigate("/")}

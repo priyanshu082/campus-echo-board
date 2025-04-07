@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -64,9 +63,9 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				notice: {
-					DEFAULT: '#1E88E5',
-					hover: '#1565C0',
-					light: '#BBDEFB'
+					DEFAULT: '#2C3E50',
+					hover: '#1A2533',
+					light: '#34495E'
 				},
 				teacher: {
 					DEFAULT: '#4CAF50',

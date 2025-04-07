@@ -84,14 +84,7 @@ const LoginPage: React.FC = () => {
               </span>
             </div>
             
-            <div className="p-4 mt-4 text-sm text-center text-gray-600 bg-gray-50 rounded-md">
-              <p>For demo purposes, you can use these credentials:</p>
-              <ul className="mt-2 space-y-1">
-                <li><strong>Admin:</strong> admin@school.edu / any password</li>
-                <li><strong>Teacher:</strong> smith@school.edu / any password</li>
-                <li><strong>Student:</strong> student@school.edu / any password</li>
-              </ul>
-            </div>
+          
           </form>
         </CardContent>
       </Card>

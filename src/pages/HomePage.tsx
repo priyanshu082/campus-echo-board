@@ -15,7 +15,7 @@ const HomePage: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-6 text-center">
         <div className="animate-fade-in space-y-3">
-          <h1 className="text-4xl font-bold sm:text-5xl">Welcome to Campus Echo Board</h1>
+          <h1 className="text-4xl font-bold sm:text-5xl">Welcome to Notice Board</h1>
           <p className="max-w-2xl mx-auto text-lg text-gray-600">
             Your school's digital notice board for important announcements and updates.
           </p>
@@ -33,7 +33,7 @@ const HomePage: React.FC = () => {
         </div>
         
         <div className="max-w-3xl mx-auto mt-12">
-          <h2 className="mb-4 text-2xl font-semibold">About Campus Echo Board</h2>
+          <h2 className="mb-4 text-2xl font-semibold">About Notice Board</h2>
           <div className="grid gap-6 md:grid-cols-3">
             <div className="p-4 bg-white border rounded-lg shadow-sm">
               <h3 className="mb-2 text-lg font-medium">For Students</h3>
